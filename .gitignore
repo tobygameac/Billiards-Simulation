@@ -1,0 +1,19 @@
+Unity Projects/**/.vs
+Unity Projects/**/Temp
+Unity Projects/**/Library
+Unity Projects/**/obj
+Unity Projects/**/Builds
+Unity Projects/**/UnityGenerated
+Unity Projects/**/ExportedObj
+
+Unity Projects/**/*.svd
+Unity Projects/**/*.userprefs
+Unity Projects/**/*.csproj
+Unity Projects/**/*.pidb
+Unity Projects/**/*.suo
+Unity Projects/**/*.sln
+Unity Projects/**/*.user
+Unity Projects/**/*.unityproj
+Unity Projects/**/*.booproj
+
+*.swp
