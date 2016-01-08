@@ -13,13 +13,16 @@ public class Stick : MonoBehaviour {
 
   private Rigidbody targetBallRigidbody;
 
+  public float stickAngle;
+  private Vector3 stickZeroDirection = new Vector3(0, 0, -1);
+
   void Start() {
     targetBallRigidbody = targetBall.GetComponent<Rigidbody>();
-    stickRootY = targetBall.transform.position.y + 0.15f;
+    stickRootY = targetBall.transform.position.y/* + 0.15f*/;
   }
 
   void Update() {
-    //stickRootY += Input.GetAxis("Mouse ScrollWheel") * 0.5f;
+    stickRootY += Input.GetAxis("Mouse ScrollWheel") * 0.5f;
     force += Input.GetAxis("Mouse ScrollWheel") * forceOffset;
     force = (force < 0) ? 0 : force;
 
@@ -31,6 +34,8 @@ public class Stick : MonoBehaviour {
     Vector3 stickRoot = new Vector3(raycastHit.point.x, stickRootY, raycastHit.point.z);
 
     Vector3 stickDirection = (targetBall.transform.position - stickRoot).normalized;
+
+    stickAngle = Vector3.Angle(stickZeroDirection, stickDirection);
 
     transform.position = targetBall.transform.position - stickDirection * stickOffsetScale;
     transform.rotation = Quaternion.LookRotation(stickDirection);
