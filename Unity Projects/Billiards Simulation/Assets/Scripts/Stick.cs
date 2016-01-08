@@ -6,7 +6,7 @@ public class Stick : MonoBehaviour {
   public float force = 10.0f;
   public float forceOffset = 1000.0f;
 
-  private float stickRootY = 1.0f;
+  private float stickRootY;
 
   public GameObject targetBall;
   public float stickOffsetScale;
@@ -15,14 +15,10 @@ public class Stick : MonoBehaviour {
 
   void Start() {
     targetBallRigidbody = targetBall.GetComponent<Rigidbody>();
+    stickRootY = targetBall.transform.position.y + 0.15f;
   }
 
   void Update() {
-
-    if (Input.GetMouseButton(1)) {
-      Application.LoadLevel(0);
-    }
-
     //stickRootY += Input.GetAxis("Mouse ScrollWheel") * 0.5f;
     force += Input.GetAxis("Mouse ScrollWheel") * forceOffset;
     force = (force < 0) ? 0 : force;
