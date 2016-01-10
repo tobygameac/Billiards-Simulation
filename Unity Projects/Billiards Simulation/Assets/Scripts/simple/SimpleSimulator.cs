@@ -2,153 +2,119 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class SimpleSimulator : MonoBehaviour
-{
+public class SimpleSimulator : MonoBehaviour {
 
-    public Transform[] balls;
-    public Transform[] walls;
-    public Transform[] holes;
-    private float up, right, left, down;
-    private float thickness;
-    private SimpleBall[] simpleBalls;
+  public Transform[] ballsTransform;
+  public Transform[] wallsTransform;
+  public Transform[] holesTransform;
 
-    void Start()
-    {
-        simpleBalls = new SimpleBall[balls.Length];
-        for (int i = 0; i < balls.Length; ++i)
-        {
-            simpleBalls[i] = balls[i].GetComponent<SimpleBall>();
-            simpleBalls[i].oldV = simpleBalls[i].v;
-            simpleBalls[i].x = balls[i].position;
+  private SimpleBall[] balls;
 
-            float r = simpleBalls[i].radius * 2;
-            balls[i].localScale = new Vector3(r, r, r);
-        }
+  private float up, right, left, down;
+  private float wallThickness;
+  private float holeThickness;
 
-        thickness = walls[0].localScale.z * 0.5f;
-        right = walls[0].position.x;
-        left = walls[1].position.x;
-        up = walls[2].position.z;
-        down = walls[3].position.z;
+  public float dragScalePerSecond = 0.8f;
 
-        //Simulate(15, 0.001f);
+  void Start() {
+    balls = new SimpleBall[ballsTransform.Length];
+    for (int i = 0; i < ballsTransform.Length; ++i) {
+      balls[i] = ballsTransform[i].GetComponent<SimpleBall>();
+      balls[i].oldVelocity = balls[i].velocity;
+      balls[i].position = ballsTransform[i].position;
+
+      float diameter = balls[i].radius * 2;
+      ballsTransform[i].localScale = new Vector3(diameter, diameter, diameter);
     }
 
-    void Simulate(float endTime, float deltaTime)
-    {
-        for (float time = 0; time < endTime; time += deltaTime)
-        {
-            SimulateUpdate(deltaTime);
+    wallThickness = wallsTransform[0].localScale.z * 0.5f;
+    right = wallsTransform[0].position.x;
+    left = wallsTransform[1].position.x;
+    up = wallsTransform[2].position.z;
+    down = wallsTransform[3].position.z;
+
+    holeThickness = holesTransform[0].localScale.z * 0.5f;
+
+    Initialize();
+    Simulate(5, 0.01f);
+  }
+
+  void Initialize() {
+    balls[0].velocity = new Vector3(0, 0, -10);
+  }
+
+  void Simulate(float endTime, float deltaTime) {
+    for (float time = 0; time < endTime; time += deltaTime) {
+      SimulateUpdate(deltaTime);
+    }
+  }
+
+  void SimulateUpdate(float deltaTime) {
+    List<int>[] collisionList = new List<int>[ballsTransform.Length];
+
+    for (int i = 0; i < ballsTransform.Length; ++i) {
+      balls[i].oldVelocity = balls[i].velocity;
+
+      collisionList[i] = new List<int>();
+
+      for (int j = 0; j < ballsTransform.Length; ++j) {
+        if (i == j) {
+          continue;
         }
+        if (Vector3.Distance(balls[i].position, balls[j].position) < (balls[i].radius + balls[j].radius)) {
+          collisionList[i].Add(j);
+        }
+      }
     }
 
-    void SimulateUpdate(float deltaTime)
-    {
-        List<int>[] collisionList = new List<int>[balls.Length];
-
-        for (int i = 0; i < balls.Length; ++i)
-        {
-            simpleBalls[i].oldV = simpleBalls[i].v;
-
-            collisionList[i] = new List<int>();
-
-            for (int j = 0; j < balls.Length; ++j)
-            {
-                if (i == j)
-                    continue;
-                if (Vector3.Distance(simpleBalls[i].x, simpleBalls[j].x) < (simpleBalls[i].radius + simpleBalls[j].radius))
-                {
-                    collisionList[i].Add(j);
-                }
-            }
+    //collision detect
+    for (int i = 0; i < collisionList.Length; ++i) {
+      foreach (int j in collisionList[i]) {
+        Vector3 direction = (balls[i].position - balls[j].position).normalized;
+        Vector3 velocityDirection = (balls[i].oldVelocity - balls[j].oldVelocity).normalized;
+        if (Vector3.Dot(direction, velocityDirection) > 0) {
+          continue;
         }
 
+        float iAmout = Vector3.Dot(balls[i].oldVelocity, direction);
+        float jAmout = Vector3.Dot(balls[j].oldVelocity, direction);
 
-        for (int i = 0; i < collisionList.Length; ++i) //collision detect
-        {
-            foreach (int j in collisionList[i])
-            {
-                Vector3 direction = (simpleBalls[i].x - simpleBalls[j].x).normalized;
-                Vector3 vd = (simpleBalls[i].oldV - simpleBalls[j].oldV).normalized;
-                //direction /= (simpleBalls[i].radius + simpleBalls[j].radius);
-                if (Vector3.Dot(direction, vd) > 0) continue;
-
-                Debug.Log(i + " : " + direction.z + "(" + simpleBalls[i].x.z + " - " + simpleBalls[j].x.z + ")");
-
-                float iAmout = Vector3.Dot(simpleBalls[i].oldV, direction);
-                float jAmout = Vector3.Dot(simpleBalls[j].oldV, direction);
-
-                simpleBalls[i].v += (jAmout - iAmout) * direction;
-                //simpleBalls[j].v += (iAmout - jAmout) * direction;
-
-                //float ball1_x = balls[i].transform.position.x;
-                //float ball1_y = balls[i].transform.position.z;
-                //float ball2_x = balls[j].transform.position.x;
-                //float ball2_y = balls[j].transform.position.z;
-                //
-                //float theta = Mathf.Atan2(ball2_y - ball1_y, ball2_x - ball1_x);
-                //
-                //float ball2_vny = simpleBalls[j].oldV.z * Mathf.Cos(Mathf.PI / 2 - theta) + simpleBalls[j].oldV.x * Mathf.Cos(Mathf.PI - theta) + simpleBalls[i].oldV.z * Mathf.Cos(Mathf.PI / 2 - theta) + simpleBalls[i].oldV.x * Mathf.Cos(Mathf.PI - theta);
-                //float ball2_vnx = simpleBalls[j].oldV.z * Mathf.Cos(theta) + simpleBalls[j].oldV.x * Mathf.Cos(Mathf.PI / 2 - theta) + simpleBalls[i].oldV.z * Mathf.Cos(theta) + simpleBalls[i].oldV.x * Mathf.Cos(Mathf.PI / 2 - theta);
-                //
-                //float ball1_vny = -ball2_vny;
-                //float ball1_vnx = -ball2_vnx;
-
-                //float ball2_new_vy = ball2_vny * Mathf.Cos(Mathf.PI / 2 - theta) + ball2_vnx * Mathf.Cos(theta);
-                //float ball2_new_vx = ball2_vny * Mathf.Cos(Mathf.PI - theta) + ball2_vnx * Mathf.Cos(Mathf.PI / 2 - theta);
-
-                //float ball1_new_vy = ball1_vny * Mathf.Cos(Mathf.PI / 2 - theta) + ball1_vnx * Mathf.Cos(theta);
-                //float ball1_new_vx = ball1_vny * Mathf.Cos(Mathf.PI - theta) + ball1_vnx * Mathf.Cos(Mathf.PI / 2 - theta);
-
-                //simpleBalls[j].v -= new Vector3(ball2_new_vx, 0, ball2_new_vy);
-                //simpleBalls[i].v += new Vector3(ball1_new_vx, 0, ball1_new_vy);
-                //if (i == 0 || j == 0)
-                //Debug.Log("bump : " + i + " " + j + "(" + simpleBalls[i].v + ") (" + simpleBalls[j].v + ")");
-            }
-        }
-
-        for (int i = 0; i < balls.Length; ++i)
-        {
-            //v++
-            simpleBalls[i].x += simpleBalls[i].v * deltaTime;
-
-            // walls
-            if (simpleBalls[i].x.x + simpleBalls[i].radius + thickness >= right || simpleBalls[i].x.x - simpleBalls[i].radius - thickness <= left)
-            {
-                simpleBalls[i].v = new Vector3(-simpleBalls[i].v.x, simpleBalls[i].v.y, simpleBalls[i].v.z);
-            }
-
-            if (simpleBalls[i].x.z + simpleBalls[i].radius + thickness >= up || simpleBalls[i].x.z - simpleBalls[i].radius - thickness <= down)
-            {
-                simpleBalls[i].v = new Vector3(simpleBalls[i].v.x, simpleBalls[i].v.y, -simpleBalls[i].v.z);
-            }
-
-            //holes
-            for (int h = 0; h < holes.Length; ++h)
-            {
-                if (Vector3.Distance(simpleBalls[i].x, holes[h].position) < simpleBalls[i].radius + holes[h].transform.localScale.x * 0.5f)
-                {
-                    simpleBalls[i].score = true;
-                    simpleBalls[i].v = Vector3.zero;
-                    simpleBalls[i].x = new Vector3(simpleBalls[i].x.x, 10, simpleBalls[i].x.z);
-                }
-            }
-
-            //v--
-            float drag = Mathf.Log10(0.8f) / (1 / deltaTime);
-            drag = Mathf.Pow(10, drag);
-            simpleBalls[i].v *= drag;
-        }
-
-        for (int i = 0; i < balls.Length; ++i)
-        {
-            //pos
-            balls[i].position = simpleBalls[i].x;
-        }
+        balls[i].velocity += (jAmout - iAmout) * direction;
+      }
     }
 
-    void Update()
-    {
-        SimulateUpdate(0.01f);
+    for (int i = 0; i < ballsTransform.Length; ++i) {
+      // Move the ball
+      balls[i].position += balls[i].velocity * deltaTime;
+
+      // Check collision with walls
+      if (balls[i].position.x + balls[i].radius + wallThickness >= right || balls[i].position.x - balls[i].radius - wallThickness <= left) {
+        balls[i].velocity = new Vector3(-balls[i].velocity.x, balls[i].velocity.y, balls[i].velocity.z);
+      }
+
+      if (balls[i].position.z + balls[i].radius + wallThickness >= up || balls[i].position.z - balls[i].radius - wallThickness <= down) {
+        balls[i].velocity = new Vector3(balls[i].velocity.x, balls[i].velocity.y, -balls[i].velocity.z);
+      }
+
+      // Check collision with holes
+      for (int h = 0; h < holesTransform.Length; ++h) {
+        if (Vector3.Distance(balls[i].position, holesTransform[h].position) < balls[i].radius + holeThickness) {
+          balls[i].isInHoles = true;
+          balls[i].velocity = Vector3.zero;
+          balls[i].position = new Vector3(balls[i].position.x, 10, balls[i].position.z);
+        }
+      }
+
+      // Drag velocity down
+      float drag = Mathf.Log10(dragScalePerSecond) / (1 / deltaTime);
+      drag = Mathf.Pow(10, drag);
+      balls[i].velocity *= drag;
     }
+
+    for (int i = 0; i < ballsTransform.Length; ++i) {
+      // Set transform position
+      ballsTransform[i].position = balls[i].position;
+    }
+  }
+
 }
