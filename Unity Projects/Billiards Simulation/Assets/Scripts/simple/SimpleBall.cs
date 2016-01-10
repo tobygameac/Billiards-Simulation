@@ -9,4 +9,5 @@ public class SimpleBall : MonoBehaviour
     public Vector3 a;
     public float radius;
     public float mass;
+    public bool score;
 }
