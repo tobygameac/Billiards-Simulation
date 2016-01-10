@@ -1,14 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-[RequireComponent(typeof(Collider))]
-public class SimpleBall : MonoBehaviour {
+public class SimpleBall : MonoBehaviour
+{
 
-	void Start () {
-	
+	void Start ()
+    {
 	}
-
-  void OnTriggerEnter(Collider collider) {
-	}
-
+    
+    public Vector3 x;
+    public Vector3 v;
+    public Vector3 oldV;
+    public Vector3 a;
+    public float radius;
+    public float mass;
 }
