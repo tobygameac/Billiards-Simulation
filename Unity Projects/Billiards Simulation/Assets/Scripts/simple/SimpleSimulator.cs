@@ -48,14 +48,14 @@ public class SimpleSimulator : MonoBehaviour {
     float bestXVelocity = -1;
     float bestYVelocity = -1;
 
-    for (float xVelocity = -0.5f; xVelocity <= 0.5f; xVelocity += 0.05f) {
-      for (float yVelocity = -20; yVelocity >= -100f; yVelocity -= 10f) {
+    for (float xVelocity = -15f; xVelocity <= 15f; xVelocity += 1.0f) {
+      for (float yVelocity = 5; yVelocity >= -80f; yVelocity -= 15f) {
 
         Initialize();
 
         balls[0].velocity = balls[0].oldVelocity = new Vector3(xVelocity, 0, yVelocity);
 
-        Simulate(5, 0.01f);
+        Simulate(12, 0.01f);
 
         int resultCount = CountOfBallsInHoles();
         if (resultCount > bestCount) {
@@ -78,8 +78,8 @@ public class SimpleSimulator : MonoBehaviour {
 
   void Update() {
     if (isDemoResult) {
-      demoTime += Time.deltaTime;
-      if (demoTime >= 5) {
+      demoTime += 0.01f;
+      if (demoTime >= 12) {
         isDemoResult = false;
       }
       SimulateUpdate(0.01f);
@@ -174,6 +174,12 @@ public class SimpleSimulator : MonoBehaviour {
         }
       }
 
+      // Rotation
+      float xAxis = (balls[i].position.z - balls[i].oldPosition.z) / balls[i].radius;
+      float yAxis = (balls[i].position.y - balls[i].oldPosition.y) / balls[i].radius;
+      float zAxis = (balls[i].position.x - balls[i].oldPosition.x) / balls[i].radius;
+      balls[i].rotation = 180 * new Vector3(xAxis, yAxis, zAxis) / Mathf.PI;
+
       // Drag velocity down
       float drag = Mathf.Log10(dragScalePerSecond) / (1 / deltaTime);
       drag = Mathf.Pow(10, drag);
@@ -183,6 +189,7 @@ public class SimpleSimulator : MonoBehaviour {
     for (int i = 0; i < ballsTransform.Length; ++i) {
       // Set transform position
       ballsTransform[i].position = balls[i].position;
+      ballsTransform[i].rotation = Quaternion.Euler(balls[i].rotation);
     }
   }
 
