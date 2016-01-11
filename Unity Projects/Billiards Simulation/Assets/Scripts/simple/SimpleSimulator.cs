@@ -8,6 +8,8 @@ public class SimpleSimulator : MonoBehaviour {
   public Transform[] wallsTransform;
   public Transform[] holesTransform;
 
+  private Vector3[] initialPosition;
+
   private SimpleBall[] balls;
 
   private float up, right, left, down;
@@ -16,12 +18,17 @@ public class SimpleSimulator : MonoBehaviour {
 
   public float dragScalePerSecond = 0.8f;
 
+  private bool isDemoResult;
+  private float demoTime;
+
   void Start() {
     balls = new SimpleBall[ballsTransform.Length];
+    initialPosition = new Vector3[ballsTransform.Length];
+
     for (int i = 0; i < ballsTransform.Length; ++i) {
       balls[i] = ballsTransform[i].GetComponent<SimpleBall>();
-      balls[i].oldVelocity = balls[i].velocity;
-      balls[i].position = ballsTransform[i].position;
+
+      initialPosition[i] = ballsTransform[i].position;
 
       float diameter = balls[i].radius * 2;
       ballsTransform[i].localScale = new Vector3(diameter, diameter, diameter);
@@ -35,12 +42,74 @@ public class SimpleSimulator : MonoBehaviour {
 
     holeThickness = holesTransform[0].localScale.z * 0.5f;
 
+    isDemoResult = false;
+
+    int bestCount = -1;
+    float bestXVelocity = -1;
+    float bestYVelocity = -1;
+
+    for (float xVelocity = -0.5f; xVelocity <= 0.5f; xVelocity += 0.05f) {
+      for (float yVelocity = -20; yVelocity >= -100f; yVelocity -= 10f) {
+
+        Initialize();
+
+        balls[0].velocity = balls[0].oldVelocity = new Vector3(xVelocity, 0, yVelocity);
+
+        Simulate(5, 0.01f);
+
+        int resultCount = CountOfBallsInHoles();
+        if (resultCount > bestCount) {
+          bestCount = resultCount;
+          bestXVelocity = xVelocity;
+          bestYVelocity = yVelocity;
+        }
+      }
+    }
+
+    Debug.Log(bestCount + " Best velocity : " + bestXVelocity + " " + bestYVelocity);
+
     Initialize();
-    Simulate(5, 0.01f);
+
+    balls[0].velocity = balls[0].oldVelocity = new Vector3(bestXVelocity, 0, bestYVelocity);
+
+    demoTime = 0;
+    isDemoResult = true;
+  }
+
+  void Update() {
+    if (isDemoResult) {
+      demoTime += Time.deltaTime;
+      if (demoTime >= 5) {
+        isDemoResult = false;
+      }
+      SimulateUpdate(0.01f);
+    }
+  }
+
+  int CountOfBallsInHoles() {
+    int count = 0;
+    for (int i = 0; i < balls.Length; ++i) {
+      if (balls[i].isInHoles) {
+        if (i == 0) {
+          return -1;
+        }
+        ++count;
+      }
+    }
+    return count;
   }
 
   void Initialize() {
-    balls[0].velocity = new Vector3(0, 0, -10);
+
+    for (int i = 0; i < balls.Length; ++i) {
+      balls[i].isInHoles = false;
+      balls[i].velocity = new Vector3(0, 0, 0);
+      balls[i].position = initialPosition[i];
+    }
+
+    for (int i = 0; i < balls.Length; ++i) {
+      balls[i].oldVelocity = balls[i].velocity;
+    }
   }
 
   void Simulate(float endTime, float deltaTime) {
@@ -101,7 +170,7 @@ public class SimpleSimulator : MonoBehaviour {
         if (Vector3.Distance(balls[i].position, holesTransform[h].position) < balls[i].radius + holeThickness) {
           balls[i].isInHoles = true;
           balls[i].velocity = Vector3.zero;
-          balls[i].position = new Vector3(balls[i].position.x, 10, balls[i].position.z);
+          balls[i].position = new Vector3(balls[i].position.x, -10, balls[i].position.z);
         }
       }
 

@@ -6,10 +6,10 @@ public class Main : MonoBehaviour {
   public GameObject gamePrefab;
 
   void Start() {
-    float forceGap = 50.0f;
-    int forceCount = (int)(300 / forceGap);
-    float angleGap = 10.0f;
-    int angleCount = (int)(360 / angleGap);
+    float forceGap = 100.0f;
+    int forceCount = (int)(400 / forceGap);
+    float angleGap = 0.25f;
+    int angleCount = (int)(10 / angleGap);
 
     int totalObjectCount = 0;
     for (int i = 0; i < forceCount; ++i) {
